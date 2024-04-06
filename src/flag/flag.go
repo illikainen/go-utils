@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/illikainen/go-utils/src/iofs"
+	"github.com/illikainen/go-utils/src/sandbox"
 
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
@@ -51,18 +52,23 @@ func (p *Path) Set(value string) error {
 		}
 	}
 
-	for _, path := range paths {
-		exists, err := iofs.Exists(path)
-		if err != nil {
-			return err
-		}
+	// The state is only validated in a non-sandboxed parent process
+	// because a non-existent path has to be created before the sandboxed
+	// subprocess is spawned if the file should be mounted in the sandbox.
+	if !sandbox.IsSandboxed() {
+		for _, path := range paths {
+			exists, err := iofs.Exists(path)
+			if err != nil {
+				return err
+			}
 
-		if p.State&MustExist == MustExist && !exists {
-			return errors.Errorf("%s does not exist", path)
-		}
+			if p.State&MustExist == MustExist && !exists {
+				return errors.Errorf("%s does not exist", path)
+			}
 
-		if p.State&MustNotExist == MustNotExist && exists {
-			return errors.Errorf("%s must not exist", path)
+			if p.State&MustNotExist == MustNotExist && exists {
+				return errors.Errorf("%s must not exist", path)
+			}
 		}
 	}
 
