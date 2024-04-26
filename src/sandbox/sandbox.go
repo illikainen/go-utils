@@ -27,9 +27,12 @@ const (
 const env = "GO_UTILS_SANDBOXED"
 
 func Run(opts Options) error {
-	bin, err := filepath.Abs(os.Args[0])
-	if err != nil {
-		return err
+	bin, err := exec.LookPath(os.Args[0])
+	if err != nil || bin == os.Args[0] {
+		bin, err = filepath.Abs(os.Args[0])
+		if err != nil {
+			return err
+		}
 	}
 
 	args := []string{
