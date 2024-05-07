@@ -3,6 +3,7 @@
 package tools
 
 import (
+	_ "github.com/google/gops"
 	_ "github.com/gostaticanalysis/nilerr/cmd/nilerr"
 	_ "github.com/kisielk/errcheck"
 	_ "github.com/mgechev/revive"

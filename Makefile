@@ -24,6 +24,7 @@ TOOL_REVIVE := $(GOPATH)/pkg/mod/github.com/mgechev/revive@v1.3.2
 TOOL_GOSEC := ./tools/gosec.go
 TOOL_GOIMPORTS := $(GOPATH)/pkg/mod/golang.org/x/tools@v0.13.0/cmd/goimports
 TOOL_STATICCHECK := $(GOPATH)/pkg/mod/honnef.co/go/tools@v0.4.2/cmd/staticcheck
+TOOL_GOPS := $(GOPATH)/pkg/mod/github.com/google/gops@v0.3.25
 
 export GOPATH := $(GOPATH)
 export GOCACHE := $(GOCACHE)
@@ -100,6 +101,7 @@ tools:
 	@$(SANDBOX) go build -modfile tools/go.mod -o $(OUTPUT_TOOLS) $(TOOL_GOSEC)
 	@$(SANDBOX) go build -modfile tools/go.mod -o $(OUTPUT_TOOLS) $(TOOL_GOIMPORTS)
 	@$(SANDBOX) go build -modfile tools/go.mod -o $(OUTPUT_TOOLS) $(TOOL_STATICCHECK)
+	@$(SANDBOX) go build -modfile tools/go.mod -o $(OUTPUT_TOOLS) $(TOOL_GOPS)
 	@$(SANDBOX) echo "output stored in $(OUTPUT_TOOLS)"
 
 clean:
