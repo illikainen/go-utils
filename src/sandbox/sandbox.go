@@ -2,7 +2,6 @@ package sandbox
 
 import (
 	"fmt"
-	"math"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -13,7 +12,6 @@ import (
 	"github.com/illikainen/go-utils/src/iofs"
 
 	"github.com/pkg/errors"
-	"github.com/shirou/gopsutil/v3/process"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -30,6 +28,12 @@ const (
 
 const activeEnv = "GO_UTILS_SANDBOX_ACTIVE"
 const debugEnv = "GO_UTILS_SANDBOX_DEBUG"
+
+func init() {
+	if IsSandboxed() && os.Getenv(debugEnv) == "1" {
+		AwaitDebugger()
+	}
+}
 
 func Run(opts Options) error {
 	bin, err := exec.LookPath(os.Args[0])
@@ -95,48 +99,12 @@ func Run(opts Options) error {
 	cmd.Stderr = os.Stderr
 	cmd.Env = append(os.Environ(), fmt.Sprintf("%s=1", activeEnv))
 
-	if IsDebugging() {
-		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=1", debugEnv))
-	}
-
 	log.Tracef("sandbox: execute: %s", strings.Join(args, " "))
 	return cmd.Run()
 }
 
 func IsSandboxed() bool {
 	return os.Getenv(activeEnv) == "1"
-}
-
-// To sandbox ourselves, we re-execute argv in a sandboxed subprocess.
-// Unfortunately, Delve doesn't seem to support following subprocesses, so the
-// terrible workaround used here is to check if the parent process was started
-// by Delve.  If that's the case, an environment variable is introduced to the
-// sandboxed subprocess to indicate that the subprocess should wait for a
-// debugger to attach.
-//
-// FIXME: This is really ugly, there must be a better solution!
-func IsDebugging() bool {
-	env := os.Getenv(debugEnv)
-	if env == "1" {
-		return true
-	}
-
-	ppid := os.Getppid()
-	if ppid < math.MinInt32 || ppid > math.MaxInt32 {
-		return false
-	}
-
-	proc, err := process.NewProcess(int32(ppid))
-	if err != nil {
-		return false
-	}
-
-	cmdline, err := proc.CmdlineSlice()
-	if err != nil {
-		return false
-	}
-
-	return len(cmdline) > 0 && filepath.Base(cmdline[0]) == "dlv"
 }
 
 func AwaitDebugger() {
