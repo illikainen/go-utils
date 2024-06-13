@@ -26,11 +26,12 @@ const (
 	ShareNet = 1 << iota
 )
 
-const activeEnv = "GO_UTILS_SANDBOX_ACTIVE"
-const debugEnv = "GO_UTILS_SANDBOX_DEBUG"
+const disableEnv = "GO_SANDBOX_DISABLE"
+const activeEnv = "GO_SANDBOX_ACTIVE"
+const debugEnv = "GO_SANDBOX_DEBUG"
 
 func init() {
-	if IsSandboxed() && os.Getenv(debugEnv) == "1" {
+	if Compatible() && IsSandboxed() && os.Getenv(debugEnv) == "1" {
 		AwaitDebugger()
 	}
 }
@@ -117,7 +118,7 @@ func AwaitDebugger() {
 }
 
 func Compatible() bool {
-	return runtime.GOOS == "linux"
+	return os.Getenv(disableEnv) != "1" && runtime.GOOS == "linux"
 }
 
 func expand(path string) (string, error) {
