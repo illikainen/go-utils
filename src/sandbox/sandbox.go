@@ -2,6 +2,7 @@ package sandbox
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -10,16 +11,22 @@ import (
 	"time"
 
 	"github.com/illikainen/go-utils/src/iofs"
+	"github.com/illikainen/go-utils/src/logging"
+	"github.com/illikainen/go-utils/src/process"
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
 type Options struct {
-	Args  []string
-	RO    []string
-	RW    []string
-	Share int
+	Command []string
+	Env     []string
+	RO      []string
+	RW      []string
+	Share   int
+	Stdin   io.Reader
+	Stdout  process.OutputFunc
+	Stderr  process.OutputFunc
 }
 
 const (
@@ -31,17 +38,25 @@ const activeEnv = "GO_SANDBOX_ACTIVE"
 const debugEnv = "GO_SANDBOX_DEBUG"
 
 func init() {
-	if Compatible() && IsSandboxed() && os.Getenv(debugEnv) == "1" {
-		AwaitDebugger()
+	if Compatible() && IsSandboxed() {
+		// The parent process should sanitize the output by removing eg., ANSI
+		// escape sequences before priting.  However, that removes styling with
+		// colors etc., making it preferable to log as JSON in the sandboxed
+		// subprocess and let the parent process apply the desired styling.
+		log.SetFormatter(&logging.SanitizedJSONFormatter{})
+
+		if os.Getenv(debugEnv) == "1" {
+			AwaitDebugger()
+		}
 	}
 }
 
-func Run(opts Options) error {
+func Exec(opts Options) (*process.ExecOutput, error) {
 	bin, err := exec.LookPath(os.Args[0])
 	if err != nil || bin == os.Args[0] {
 		bin, err = filepath.Abs(os.Args[0])
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
@@ -76,7 +91,7 @@ func Run(opts Options) error {
 		if path != "" {
 			path, err := expand(path)
 			if err != nil {
-				return err
+				return nil, err
 			}
 			args = append(args, "--bind-try", path, path)
 		}
@@ -86,22 +101,26 @@ func Run(opts Options) error {
 		if path != "" {
 			path, err = expand(path)
 			if err != nil {
-				return err
+				return nil, err
 			}
 			args = append(args, "--ro-bind-try", path, path)
 		}
 	}
 
-	args = append(args, opts.Args...)
+	args = append(args, opts.Command...)
+	env := opts.Env
+	if env == nil {
+		env = os.Environ()
+	}
 
-	cmd := exec.Command(args[0], args[1:]...) // #nosec G204
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Env = append(os.Environ(), fmt.Sprintf("%s=1", activeEnv))
-
-	log.Tracef("sandbox: execute: %s", strings.Join(args, " "))
-	return cmd.Run()
+	log.Trace("sandbox: starting subprocess...")
+	return process.Exec(&process.ExecOptions{
+		Command: args,
+		Env:     append(env, fmt.Sprintf("%s=1", activeEnv)),
+		Stdin:   opts.Stdin,
+		Stdout:  opts.Stdout,
+		Stderr:  opts.Stderr,
+	})
 }
 
 func IsSandboxed() bool {
