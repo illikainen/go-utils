@@ -173,7 +173,7 @@ func LogrusOutput(reader io.Reader, _ int) ([]byte, error) {
 	data := []byte{}
 	for scanner.Scan() {
 		var fields log.Fields
-		err := json.Unmarshal(stringx.Sanitize(scanner.Text()), &fields)
+		err := json.Unmarshal(stringx.Sanitize(scanner.Bytes()), &fields)
 		if err != nil {
 			return nil, err
 		}

@@ -26,15 +26,22 @@ func Interpolate(s string) (string, error) {
 	return repl.Replace(s), nil
 }
 
-func Sanitize(s string) []byte {
-	input := []byte(s)
+func Sanitize[T []byte | string](s T) T {
+	var input []byte
+
+	if value, ok := any(s).([]byte); ok {
+		input = value
+	} else {
+		input = []byte(s)
+	}
+
 	for i, b := range input {
 		if b != 0xa && (b < 0x20 || b > 0x7e) {
 			input[i] = '_'
 		}
 	}
 
-	return input
+	return T(input)
 }
 
 func SplitLines(s string) []string {

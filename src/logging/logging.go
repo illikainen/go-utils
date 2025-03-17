@@ -28,7 +28,7 @@ func (f *SanitizedJSONFormatter) Format(e *log.Entry) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return stringx.Sanitize(string(out)), nil
+	return stringx.Sanitize(out), nil
 }
 
 type SanitizedTextFormatter struct {
