@@ -99,7 +99,9 @@ func (p *Path) Set(value string) error {
 		}
 	}
 
-	*p.dst = value
+	if p.dst != nil {
+		*p.dst = value
+	}
 	p.Value = value
 	return nil
 }
