@@ -21,6 +21,7 @@ type FileInfo interface {
 }
 
 var ErrInvalidSize = errors.New("invalid size")
+var ErrInvalidOffset = errors.New("invalid offset")
 
 func Exists(path string) (bool, error) {
 	_, err := os.Stat(path)
@@ -203,4 +204,17 @@ func Expand(path string) (string, error) {
 	}
 
 	return path, nil
+}
+
+func Seek(s io.Seeker, offset int64, whence int) (int64, error) {
+	n, err := s.Seek(offset, whence)
+	if err != nil {
+		return 0, err
+	}
+
+	if n != offset {
+		return 0, ErrInvalidOffset
+	}
+
+	return n, nil
 }
