@@ -33,6 +33,33 @@ type Path struct {
 	dst      *string
 }
 
+func SetFallback[T string | []string](flags *pflag.FlagSet, name string, value ...T) error {
+	f := flags.Lookup(name)
+	if f != nil && !flags.Changed(name) {
+		for _, value := range value {
+			switch value := any(value).(type) {
+			case string:
+				if value != "" {
+					return f.Value.Set(value)
+				}
+			case []string:
+				if value != nil {
+					for _, v := range value {
+						err := f.Value.Set(v)
+						if err != nil {
+							return err
+						}
+					}
+					return nil
+				}
+			default:
+				return errors.Errorf("invalid value type")
+			}
+		}
+	}
+	return nil
+}
+
 func PathVarP(flags *pflag.FlagSet, p *string, name string, shorthand string, value Path, usage string) {
 	value.dst = p
 	if value.Value != "" {
