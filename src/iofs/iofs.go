@@ -112,6 +112,15 @@ func Copy[T any, U any](dst T, src U) (err error) {
 			srcName = fmt.Sprintf("%p", src)
 		}
 
+		seeker, ok := any(src).(io.Seeker)
+		if ok {
+			n, err := seeker.Seek(0, io.SeekCurrent)
+			if err != nil {
+				return err
+			}
+			srcSize -= n
+		}
+
 		srcf = src
 	case *zip.File:
 		f, err := src.Open()
