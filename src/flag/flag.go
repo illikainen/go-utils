@@ -2,7 +2,6 @@ package flag
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/illikainen/go-utils/src/iofs"
 	"github.com/illikainen/go-utils/src/sandbox"
@@ -11,15 +10,6 @@ import (
 	"github.com/samber/lo"
 	"github.com/spf13/pflag"
 )
-
-type EnumType interface {
-	int | string
-}
-
-type Enum[T EnumType] struct {
-	Name  string
-	Value T
-}
 
 const (
 	MustExist = 1 << iota
@@ -112,48 +102,4 @@ func (p *Path) String() string {
 
 func (p *Path) Type() string {
 	return "path"
-}
-
-type StringToInt[T EnumType] struct {
-	Value         string
-	Kind          string
-	Choices       map[string]T
-	CaseSensitive bool
-	dst           *Enum[T]
-}
-
-func StringToVarP[T EnumType](flags *pflag.FlagSet, p *Enum[T], name string,
-	shorthand string, value StringToInt[T], usage string) {
-	value.dst = p
-	if value.Value != "" {
-		lo.Must0(value.Set(value.Value))
-	}
-
-	flags.VarP(
-		&value,
-		name,
-		shorthand,
-		fmt.Sprintf("%s (%s)", usage, strings.Join(lo.Keys(value.Choices), ", ")),
-	)
-}
-
-func (p *StringToInt[T]) Set(value string) error {
-	n, ok := p.Choices[lo.Ternary(p.CaseSensitive, strings.ToUpper(value), value)]
-	if !ok {
-		return errors.Errorf("choices: %s", strings.Join(lo.Keys(p.Choices), ", "))
-	}
-
-	p.dst.Name = value
-	p.dst.Value = n
-
-	p.Value = value
-	return nil
-}
-
-func (p *StringToInt[T]) String() string {
-	return p.Value
-}
-
-func (p *StringToInt[T]) Type() string {
-	return lo.Ternary(p.Kind == "", "intmap", p.Kind)
 }
