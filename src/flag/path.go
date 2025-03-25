@@ -7,8 +7,6 @@ import (
 	"github.com/illikainen/go-utils/src/sandbox"
 
 	"github.com/pkg/errors"
-	"github.com/samber/lo"
-	"github.com/spf13/pflag"
 )
 
 const (
@@ -20,16 +18,6 @@ type Path struct {
 	Value    string
 	State    int
 	Suffixes []string
-	dst      *string
-}
-
-func PathVarP(flags *pflag.FlagSet, p *string, name string, shorthand string, value Path, usage string) {
-	value.dst = p
-	if value.Value != "" {
-		lo.Must0(value.Set(value.Value))
-	}
-
-	flags.VarP(&value, name, shorthand, usage)
 }
 
 func (p *Path) Set(value string) error {
@@ -62,9 +50,6 @@ func (p *Path) Set(value string) error {
 		}
 	}
 
-	if p.dst != nil {
-		*p.dst = value
-	}
 	p.Value = value
 	return nil
 }
