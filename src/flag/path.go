@@ -31,6 +31,7 @@ func (p *Path) Set(value string) error {
 		}
 	}
 
+	p.Value = value
 	p.Values = paths
 
 	// The state is only validated in a non-sandboxed parent process
@@ -53,7 +54,6 @@ func (p *Path) Set(value string) error {
 		}
 	}
 
-	p.Value = value
 	return nil
 }
 
