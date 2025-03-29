@@ -222,3 +222,18 @@ func Seek(s io.Seeker, offset int64, whence int) (int64, error) {
 
 	return n, nil
 }
+
+func Remove(path string) error {
+	stat, err := os.Stat(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+
+	if stat.IsDir() {
+		return os.RemoveAll(path)
+	}
+	return os.Remove(path)
+}
