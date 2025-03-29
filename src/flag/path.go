@@ -45,11 +45,11 @@ func (p *Path) Set(value string) error {
 			}
 
 			if p.State&MustExist == MustExist && !exists {
-				return errors.Errorf("%s does not exist", path)
+				return errors.Wrap(os.ErrNotExist, path)
 			}
 
 			if p.State&MustNotExist == MustNotExist && exists {
-				return errors.Errorf("%s must not exist", path)
+				return errors.Wrap(os.ErrExist, path)
 			}
 		}
 	}
