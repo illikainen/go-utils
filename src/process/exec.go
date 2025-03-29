@@ -175,7 +175,9 @@ func LogrusOutput(reader io.Reader, _ int) ([]byte, error) {
 		var fields log.Fields
 		err := json.Unmarshal(stringx.Sanitize(scanner.Bytes()), &fields)
 		if err != nil {
-			return nil, err
+			fields = log.Fields{}
+			fields["msg"] = stringx.Sanitize(scanner.Text())
+			fields["unstyled"] = true
 		}
 
 		level, err := log.ParseLevel(logging.GetField(fields, "level", "info"))
