@@ -78,16 +78,16 @@ func (l *LogLevel) Type() string {
 	return "loglevel"
 }
 
-func GetField(fields log.Fields, key string, fallback string) string {
+func GetField[T bool | string](fields log.Fields, key string, fallback T) T {
 	value, ok := fields[key]
 	if !ok {
 		return fallback
 	}
 
-	str, ok := value.(string)
+	v, ok := value.(T)
 	if !ok {
 		return fallback
 	}
 
-	return str
+	return v
 }
