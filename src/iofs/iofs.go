@@ -187,6 +187,10 @@ func MkdirTemp() (string, func() error, error) {
 }
 
 func Expand(path string) (string, error) {
+	if path == "" {
+		return "", errors.Errorf("empty path")
+	}
+
 	sep := string(os.PathSeparator)
 
 	if strings.HasPrefix(path, "~"+sep) {
