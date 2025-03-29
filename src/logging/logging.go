@@ -35,6 +35,10 @@ type SanitizedTextFormatter struct {
 }
 
 func (f *SanitizedTextFormatter) Format(entry *log.Entry) ([]byte, error) {
+	if GetField(entry.Data, "unstyled", false) {
+		return []byte(stringx.Sanitize(entry.Message) + "\n"), nil
+	}
+
 	level := ""
 
 	switch entry.Level {
