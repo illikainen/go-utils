@@ -60,6 +60,15 @@ func Exec(opts Options) (*process.ExecOutput, error) {
 		}
 	}
 
+	// The current work directory needs to exist in the sandbox to support
+	// relative paths like ../../foobar.  However, the real CWD isn't
+	// mounted into the sandbox; instead, a tmpfs with the same path is
+	// created in the sandbox.
+	cwd, err := os.Getwd()
+	if err != nil {
+		return nil, err
+	}
+
 	args := []string{
 		"bwrap",
 		"--new-session",
@@ -72,6 +81,7 @@ func Exec(opts Options) (*process.ExecOutput, error) {
 		"--cap-drop", "ALL",
 		"--dev", "/dev",
 		"--tmpfs", "/tmp",
+		"--tmpfs", cwd,
 		"--ro-bind-try", "/etc/passwd", "/etc/passwd",
 		"--ro-bind-try", "/etc/hosts", "/etc/hosts",
 		"--ro-bind-try", "/etc/resolv.conf", "/etc/resolv.conf",
