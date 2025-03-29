@@ -16,6 +16,7 @@ const (
 
 type Path struct {
 	Value    string
+	Values   []string
 	State    int
 	Suffixes []string
 }
@@ -29,6 +30,8 @@ func (p *Path) Set(value string) error {
 			paths = append(paths, fmt.Sprintf("%s.%s", value, suffix))
 		}
 	}
+
+	p.Values = paths
 
 	// The state is only validated in a non-sandboxed parent process
 	// because a non-existent path has to be created before the sandboxed
