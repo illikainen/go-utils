@@ -23,6 +23,7 @@ type Options struct {
 	Env     []string
 	RO      []string
 	RW      []string
+	Dev     []string
 	Share   int
 	Stdin   io.Reader
 	Stdout  process.OutputFunc
@@ -114,6 +115,24 @@ func Exec(opts Options) (*process.ExecOutput, error) {
 				return nil, err
 			}
 			args = append(args, "--ro-bind-try", path, path)
+		}
+	}
+
+	for _, path := range opts.Dev {
+		if path != "" {
+			path, err = expand(path)
+			if err != nil {
+				return nil, err
+			}
+
+			exists, err := iofs.Exists(path)
+			if err != nil {
+				return nil, err
+			}
+
+			if exists {
+				args = append(args, "--dev-bind", path, path)
+			}
 		}
 	}
 
