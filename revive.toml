@@ -9,6 +9,9 @@ arguments = [8]
 [rule.banned-characters]
 disabled = true
 
+[rule.comment-spacings]
+arguments = ["lint"]
+
 [rule.cyclomatic]
 arguments = [60]
 
