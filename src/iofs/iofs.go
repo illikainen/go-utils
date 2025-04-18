@@ -114,7 +114,7 @@ func Copy[T any, U any](dst T, src U) (err error) {
 		}
 
 		seeker, ok := any(src).(io.Seeker)
-		if ok {
+		if ok && srcSize > 0 {
 			n, err := seeker.Seek(0, io.SeekCurrent)
 			if err != nil {
 				return err
