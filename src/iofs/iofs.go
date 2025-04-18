@@ -20,6 +20,10 @@ type FileInfo interface {
 	Stat() (os.FileInfo, error)
 }
 
+type Syncer interface {
+	Sync() error
+}
+
 var ErrInvalidSize = errors.New("invalid size")
 var ErrInvalidOffset = errors.New("invalid offset")
 
@@ -161,6 +165,14 @@ func Copy[T any, U any](dst T, src U) (err error) {
 
 	if srcSize >= 0 && n != srcSize {
 		return errors.Wrap(ErrInvalidSize, srcName)
+	}
+
+	if syncer, ok := any(dstf).(Syncer); ok {
+		log.Tracef("%s: syncing... (%d)", dstName, n)
+		err := syncer.Sync()
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
