@@ -61,6 +61,14 @@ func ReadFile(path string) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+func WriteFile(path string, r io.Reader) error {
+	err := Copy(path, r)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func Copy[T any, U any](dst T, src U) (err error) {
 	var dstf io.Writer
 	dstName := ""
