@@ -1,7 +1,6 @@
 package errorx
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -52,13 +51,10 @@ func (e *joinError) Error() string {
 }
 
 func (e *joinError) Unwrap() error {
-	lines := []string{}
-	for _, err := range e.errs {
-		lines = append(lines, fmt.Sprintf("%s", err))
+	if len(e.errs) > 0 {
+		return &joinError{errs: e.errs[1:]}
 	}
-	return errors.Errorf("%s", strings.Join(lines, "\n"))
+	return nil
 }
 
-func (e *joinError) UnwrapSlice() []error {
-	return e.errs
 }
