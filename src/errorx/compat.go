@@ -57,4 +57,11 @@ func (e *joinError) Unwrap() error {
 	return nil
 }
 
+func (e *joinError) Is(target error) bool {
+	for _, err := range e.errs {
+		if errors.Is(err, target) {
+			return true
+		}
+	}
+	return false
 }
