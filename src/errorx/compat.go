@@ -44,14 +44,11 @@ type joinError struct {
 }
 
 func (e *joinError) Error() string {
-	var b []byte
-	for i, err := range e.errs {
-		if i > 0 {
-			b = append(b, '\n')
-		}
-		b = append(b, err.Error()...)
+	strs := []string{}
+	for _, err := range e.errs {
+		strs = append(strs, err.Error())
 	}
-	return string(b)
+	return strings.Join(strs, "\n")
 }
 
 func (e *joinError) Unwrap() error {
