@@ -20,6 +20,7 @@ type ExecOptions struct {
 	Stdin   io.Reader
 	Stdout  OutputFunc
 	Stderr  OutputFunc
+	Trusted bool
 }
 
 const (
@@ -62,7 +63,7 @@ func Exec(opts *ExecOptions) (*ExecOutput, error) {
 	}
 
 	group.Go(func() error {
-		out.Stdout, err = stdoutFunc(stdoutPipe, Stdout)
+		out.Stdout, err = stdoutFunc(stdoutPipe, Stdout, opts.Trusted)
 		return err
 	})
 
@@ -77,7 +78,7 @@ func Exec(opts *ExecOptions) (*ExecOutput, error) {
 	}
 
 	group.Go(func() error {
-		out.Stderr, err = stderrFunc(stderrPipe, Stderr)
+		out.Stderr, err = stderrFunc(stderrPipe, Stderr, opts.Trusted)
 		return err
 	})
 

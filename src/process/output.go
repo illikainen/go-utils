@@ -2,9 +2,11 @@ package process
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"os"
 
 	"github.com/illikainen/go-utils/src/logging"
@@ -14,21 +16,36 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type OutputFunc = func(io.Reader, int) ([]byte, error)
+type OutputFunc = func(io.Reader, int, bool) ([]byte, error)
 
-// NOTE: neither the printed output nor the output buffer is sanitized
-func ByteOutput(reader io.Reader, src int) ([]byte, error) {
+func ByteOutput(reader io.Reader, src int, trusted bool) ([]byte, error) {
+	buf := &bytes.Buffer{}
+	n, err := io.Copy(buf, reader)
+	if err != nil {
+		return nil, err
+	}
+
+	if !trusted && !bytes.Equal(stringx.Sanitize(buf.Bytes()), buf.Bytes()) {
+		return nil, errors.Errorf("ByteOutput(): invalid data")
+	}
+
 	w := os.Stdout
 	if src != Stdout {
 		w = os.Stderr
 	}
 
-	_, err := io.Copy(w, reader)
+	m, err := io.Copy(w, buf)
+	if err != nil {
+		return nil, err
+	}
+	if n != m || m < math.MinInt || m > math.MaxInt || buf.Len() != int(m) {
+		return nil, errors.Errorf("ByteOutput(): invalid data size")
+	}
+
 	return nil, err
 }
 
-// NOTE: the output buffer isn't sanitized
-func CaptureOutput(reader io.Reader, _ int) ([]byte, error) {
+func CaptureOutput(reader io.Reader, _ int, trusted bool) ([]byte, error) {
 	scanner := bufio.NewScanner(reader)
 	scanner.Split(bufio.ScanBytes)
 
@@ -37,22 +54,35 @@ func CaptureOutput(reader io.Reader, _ int) ([]byte, error) {
 		data = append(data, scanner.Bytes()...)
 	}
 
-	return data, scanner.Err()
+	err := scanner.Err()
+	if err != nil {
+		return nil, err
+	}
+
+	if !trusted && !bytes.Equal(stringx.Sanitize(data), data) {
+		return nil, errors.Errorf("CaptureOutput(): invalid data")
+	}
+
+	return data, nil
 }
 
-// NOTE: the printed output is sanitized but the output buffer is not
-func TextOutput(reader io.Reader, src int) ([]byte, error) {
+func TextOutput(reader io.Reader, src int, trusted bool) ([]byte, error) {
 	scanner := bufio.NewScanner(reader)
 	scanner.Split(bufio.ScanLines)
 
+	w := os.Stdout
+	if src != Stdout {
+		w = os.Stderr
+	}
+
 	data := []byte{}
 	for scanner.Scan() {
-		w := os.Stdout
-		if src != Stdout {
-			w = os.Stderr
+		chunk := scanner.Bytes()
+		if !trusted && !bytes.Equal(stringx.Sanitize(chunk), chunk) {
+			return nil, errors.Errorf("TextOutput(): invalid data")
 		}
 
-		str := fmt.Sprintf("%s\n", stringx.Sanitize(scanner.Text()))
+		str := fmt.Sprintf("%s\n", chunk)
 		n, err := fmt.Fprintf(w, "%s", str)
 		if err != nil {
 			return nil, err
@@ -62,25 +92,29 @@ func TextOutput(reader io.Reader, src int) ([]byte, error) {
 			return nil, errors.Errorf("unexpected write, %d != %d", n, len(str))
 		}
 
-		data = append(data, scanner.Bytes()...)
+		data = append(data, chunk...)
 		data = append(data, '\n')
 	}
 
 	return data, scanner.Err()
 }
 
-// NOTE: the printed output is sanitized but the output buffer is not
-func LogrusOutput(reader io.Reader, _ int) ([]byte, error) {
+func LogrusOutput(reader io.Reader, _ int, trusted bool) ([]byte, error) {
 	scanner := bufio.NewScanner(reader)
 	scanner.Split(bufio.ScanLines)
 
 	data := []byte{}
 	for scanner.Scan() {
+		chunk := scanner.Bytes()
+		if !trusted && !bytes.Equal(stringx.Sanitize(chunk), chunk) {
+			return nil, errors.Errorf("TextOutput(): invalid data")
+		}
+
 		var fields log.Fields
-		err := json.Unmarshal(stringx.Sanitize(scanner.Bytes()), &fields)
+		err := json.Unmarshal(chunk, &fields)
 		if err != nil {
 			fields = log.Fields{}
-			fields["msg"] = stringx.Sanitize(scanner.Text())
+			fields["msg"] = string(chunk)
 			fields["unstyled"] = true
 		}
 
