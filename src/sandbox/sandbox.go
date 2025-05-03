@@ -24,6 +24,7 @@ type Options struct {
 	RO      []string
 	RW      []string
 	Dev     []string
+	Proc    bool
 	Share   int
 	Stdin   io.Reader
 	Stdout  process.OutputFunc
@@ -134,6 +135,10 @@ func Exec(opts Options) (*process.ExecOutput, error) {
 				args = append(args, "--dev-bind", path, path)
 			}
 		}
+	}
+
+	if opts.Proc {
+		args = append(args, "--proc", "/proc")
 	}
 
 	args = append(args, opts.Command...)
