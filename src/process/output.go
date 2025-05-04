@@ -38,11 +38,11 @@ func ByteOutput(reader io.Reader, src int, trusted bool) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	if n != m || m < math.MinInt || m > math.MaxInt || buf.Len() != int(m) {
+	if n != m || m < math.MinInt || m > math.MaxInt {
 		return nil, errors.Errorf("ByteOutput(): invalid data size")
 	}
 
-	return nil, err
+	return buf.Bytes(), nil
 }
 
 func CaptureOutput(reader io.Reader, _ int, trusted bool) ([]byte, error) {
