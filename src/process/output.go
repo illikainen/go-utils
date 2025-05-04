@@ -18,6 +18,19 @@ import (
 
 type OutputFunc = func(io.Reader, int, bool) ([]byte, error)
 
+// FIXME: do something about the blocking behavior when io.Copy()ing from a
+// pipe to a *bytes.Buffer in ByteOutput() so that we don't need this function
+// when shipping data from one process to another.
+func UnsafeByteOutput(reader io.Reader, src int, trusted bool) ([]byte, error) {
+	w := os.Stdout
+	if src != Stdout {
+		w = os.Stderr
+	}
+
+	_, err := io.Copy(w, reader)
+	return nil, err
+}
+
 func ByteOutput(reader io.Reader, src int, trusted bool) ([]byte, error) {
 	buf := &bytes.Buffer{}
 	n, err := io.Copy(buf, reader)
