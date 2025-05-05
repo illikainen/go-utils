@@ -89,6 +89,7 @@ func Exec(opts Options) (*process.ExecOutput, error) {
 		"--ro-bind-try", "/etc/hosts", "/etc/hosts",
 		"--ro-bind-try", "/etc/resolv.conf", "/etc/resolv.conf",
 		"--ro-bind-try", "/etc/nsswitch.conf", "/etc/nsswitch.conf",
+		"--ro-bind-try", "/bin", "/bin",
 		"--ro-bind-try", "/usr", "/usr",
 		"--ro-bind-try", "/lib", "/lib",
 		"--ro-bind-try", "/lib32", "/lib32",
