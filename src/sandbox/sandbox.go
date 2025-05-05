@@ -13,6 +13,7 @@ import (
 	"github.com/illikainen/go-utils/src/iofs"
 	"github.com/illikainen/go-utils/src/logging"
 	"github.com/illikainen/go-utils/src/process"
+	"github.com/samber/lo"
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -99,6 +100,7 @@ func Exec(opts Options) (*process.ExecOutput, error) {
 		args = append(args, "--unshare-net")
 	}
 
+	rw := []string{}
 	for _, path := range opts.RW {
 		if path != "" {
 			path, err := expand(path)
@@ -106,6 +108,7 @@ func Exec(opts Options) (*process.ExecOutput, error) {
 				return nil, err
 			}
 			args = append(args, "--bind-try", path, path)
+			rw = append(rw, path)
 		}
 	}
 
@@ -115,7 +118,10 @@ func Exec(opts Options) (*process.ExecOutput, error) {
 			if err != nil {
 				return nil, err
 			}
-			args = append(args, "--ro-bind-try", path, path)
+
+			if !lo.Contains(rw, path) {
+				args = append(args, "--ro-bind-try", path, path)
+			}
 		}
 	}
 
