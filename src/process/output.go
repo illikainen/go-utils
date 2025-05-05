@@ -21,7 +21,7 @@ type OutputFunc = func(io.Reader, int, bool) ([]byte, error)
 // FIXME: do something about the blocking behavior when io.Copy()ing from a
 // pipe to a *bytes.Buffer in ByteOutput() so that we don't need this function
 // when shipping data from one process to another.
-func UnsafeByteOutput(reader io.Reader, src int, trusted bool) ([]byte, error) {
+func UnsafeByteOutput(reader io.Reader, src int, _ bool) ([]byte, error) {
 	w := os.Stdout
 	if src != Stdout {
 		w = os.Stderr

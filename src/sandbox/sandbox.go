@@ -13,9 +13,9 @@ import (
 	"github.com/illikainen/go-utils/src/iofs"
 	"github.com/illikainen/go-utils/src/logging"
 	"github.com/illikainen/go-utils/src/process"
-	"github.com/samber/lo"
 
 	"github.com/pkg/errors"
+	"github.com/samber/lo"
 	log "github.com/sirupsen/logrus"
 )
 
