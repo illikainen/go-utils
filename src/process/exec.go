@@ -16,6 +16,7 @@ import (
 type ExecOptions struct {
 	Command []string
 	Env     []string
+	Dir     string
 	Become  string
 	Stdin   io.Reader
 	Stdout  OutputFunc
@@ -47,6 +48,7 @@ func Exec(opts *ExecOptions) (*ExecOutput, error) {
 	}
 
 	cmd.Env = opts.Env
+	cmd.Dir = opts.Dir
 	cmd.Stdin = opts.Stdin
 
 	out := &ExecOutput{}
