@@ -172,7 +172,17 @@ func AwaitDebugger() {
 }
 
 func Compatible() bool {
-	return os.Getenv(disableEnv) != "1" && runtime.GOOS == "linux"
+	isDocker, err := iofs.Exists("/.dockerenv")
+	if err != nil {
+		return true
+	}
+
+	isPodman, err := iofs.Exists("/run/.containerenv")
+	if err != nil {
+		return true
+	}
+
+	return os.Getenv(disableEnv) != "1" && runtime.GOOS == "linux" && !isDocker && !isPodman
 }
 
 func expand(path string) (string, error) {
