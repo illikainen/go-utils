@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -54,12 +53,14 @@ func init() {
 }
 
 func Exec(opts Options) (*process.ExecOutput, error) {
-	bin, err := exec.LookPath(os.Args[0])
-	if err != nil || bin == os.Args[0] {
-		bin, err = filepath.Abs(os.Args[0])
-		if err != nil {
-			return nil, err
-		}
+	bin, err := os.Executable()
+	if err != nil {
+		return nil, err
+	}
+
+	bin, err = filepath.Abs(bin)
+	if err != nil {
+		return nil, err
 	}
 
 	// The current work directory needs to exist in the sandbox to support
