@@ -59,29 +59,6 @@ func (f *SanitizedTextFormatter) Format(entry *log.Entry) ([]byte, error) {
 	}), nil
 }
 
-type LogLevel struct {
-	Value log.Level
-}
-
-func (l *LogLevel) Set(value string) error {
-	level, err := log.ParseLevel(value)
-	if err != nil {
-		return err
-	}
-
-	log.SetLevel(level)
-	l.Value = level
-	return nil
-}
-
-func (l *LogLevel) String() string {
-	return l.Value.String()
-}
-
-func (l *LogLevel) Type() string {
-	return "loglevel"
-}
-
 func GetField[T bool | string](fields log.Fields, key string, fallback T) T {
 	value, ok := fields[key]
 	if !ok {
