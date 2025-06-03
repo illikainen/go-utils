@@ -1,10 +1,8 @@
 package sandbox
 
 import (
-	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
@@ -17,22 +15,21 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type Options struct {
-	Command []string
-	Env     []string
-	RO      []string
-	RW      []string
-	Dev     []string
-	Proc    bool
-	Share   int
-	Stdin   io.Reader
-	Stdout  process.OutputFunc
-	Stderr  process.OutputFunc
-}
-
 const (
-	ShareNet = 1 << iota
+	BubblewrapSandbox = 1 << iota
+	NoSandbox
 )
+
+type Sandbox interface {
+	Confine() error
+	AddReadOnlyPath(path ...string) error
+	AddReadWritePath(path ...string) error
+	AddDevPath(path ...string) error
+	SetShareNet(bool)
+	SetStdin(io.Reader)
+	SetStdout(process.OutputFunc)
+	SetStderr(process.OutputFunc)
+}
 
 const disableEnv = "GO_SANDBOX_DISABLE"
 const activeEnv = "GO_SANDBOX_ACTIVE"
@@ -52,111 +49,24 @@ func init() {
 	}
 }
 
-func Exec(opts Options) (*process.ExecOutput, error) {
-	bin, err := os.Executable()
-	if err != nil {
-		return nil, err
+func Backend(name string) (int, error) {
+	switch strings.ToLower(name) {
+	case "bubblewrap":
+		return BubblewrapSandbox, nil
+	case "none":
+		return NoSandbox, nil
+	case "":
+	default:
+		return -1, errors.Errorf("%s is not a supported sandbox backend", name)
 	}
 
-	bin, err = filepath.Abs(bin)
-	if err != nil {
-		return nil, err
+	if runtime.GOOS == "linux" {
+		return BubblewrapSandbox, nil
 	}
 
-	// The current work directory needs to exist in the sandbox to support
-	// relative paths like ../../foobar.  However, the real CWD isn't
-	// mounted into the sandbox; instead, a tmpfs with the same path is
-	// created in the sandbox.
-	cwd, err := os.Getwd()
-	if err != nil {
-		return nil, err
-	}
-
-	args := []string{
-		"bwrap",
-		"--new-session",
-		"--die-with-parent",
-		"--unshare-user",
-		"--unshare-ipc",
-		"--unshare-pid",
-		"--unshare-uts",
-		"--unshare-cgroup",
-		"--cap-drop", "ALL",
-		"--dev", "/dev",
-		"--tmpfs", "/tmp",
-		"--tmpfs", cwd,
-		"--ro-bind-try", "/etc/passwd", "/etc/passwd",
-		"--ro-bind-try", "/etc/hosts", "/etc/hosts",
-		"--ro-bind-try", "/etc/resolv.conf", "/etc/resolv.conf",
-		"--ro-bind-try", "/etc/nsswitch.conf", "/etc/nsswitch.conf",
-		"--ro-bind-try", "/bin", "/bin",
-		"--ro-bind-try", "/usr", "/usr",
-		"--ro-bind-try", "/lib", "/lib",
-		"--ro-bind-try", "/lib32", "/lib32",
-		"--ro-bind-try", "/lib64", "/lib64",
-		"--ro-bind", bin, bin,
-	}
-
-	if opts.Share&ShareNet != ShareNet {
-		args = append(args, "--unshare-net")
-	}
-
-	for _, path := range opts.RO {
-		if path != "" {
-			path, err = expand(path)
-			if err != nil {
-				return nil, err
-			}
-			args = append(args, "--ro-bind-try", path, path)
-		}
-	}
-
-	for _, path := range opts.RW {
-		if path != "" {
-			path, err := expand(path)
-			if err != nil {
-				return nil, err
-			}
-			args = append(args, "--bind-try", path, path)
-		}
-	}
-
-	for _, path := range opts.Dev {
-		if path != "" {
-			path, err = expand(path)
-			if err != nil {
-				return nil, err
-			}
-
-			exists, err := iofs.Exists(path)
-			if err != nil {
-				return nil, err
-			}
-
-			if exists {
-				args = append(args, "--dev-bind", path, path)
-			}
-		}
-	}
-
-	if opts.Proc {
-		args = append(args, "--proc", "/proc")
-	}
-
-	args = append(args, opts.Command...)
-	env := opts.Env
-	if env == nil {
-		env = os.Environ()
-	}
-
-	log.Trace("sandbox: starting subprocess...")
-	return process.Exec(&process.ExecOptions{
-		Command: args,
-		Env:     append(env, fmt.Sprintf("%s=1", activeEnv)),
-		Stdin:   opts.Stdin,
-		Stdout:  opts.Stdout,
-		Stderr:  opts.Stderr,
-	})
+	log.Warnf("sandbox not compatible with %s", runtime.GOOS)
+	log.Warnf("configure `sandbox = none` to disable this warning")
+	return NoSandbox, nil
 }
 
 func IsSandboxed() bool {
