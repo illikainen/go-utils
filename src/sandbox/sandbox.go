@@ -60,7 +60,7 @@ func Backend(name string) (int, error) {
 		return -1, errors.Errorf("%s is not a supported sandbox backend", name)
 	}
 
-	if runtime.GOOS == "linux" {
+	if runtime.GOOS == "linux" && Compatible() {
 		return BubblewrapSandbox, nil
 	}
 
