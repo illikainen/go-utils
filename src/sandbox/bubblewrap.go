@@ -8,9 +8,9 @@ import (
 
 	"github.com/illikainen/go-utils/src/iofs"
 	"github.com/illikainen/go-utils/src/process"
+	"github.com/illikainen/go-utils/src/seq"
 
 	"github.com/pkg/errors"
-	"github.com/samber/lo"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -216,7 +216,7 @@ func (b *Bubblewrap) Confine() error {
 
 	paths := []string{}
 	for _, path := range b.readWritePaths {
-		if !lo.Contains(paths, path) {
+		if !seq.Contains(paths, path) {
 			args = append(args, "--bind", path, path)
 			log.Debugf("bubblewrap: rw: %s", path)
 			paths = append(paths, path)
@@ -224,7 +224,7 @@ func (b *Bubblewrap) Confine() error {
 	}
 
 	for _, path := range b.readOnlyPaths {
-		if !lo.Contains(paths, path) {
+		if !seq.Contains(paths, path) {
 			args = append(args, "--ro-bind", path, path)
 			log.Debugf("bubblewrap: ro: %s", path)
 			paths = append(paths, path)
@@ -232,7 +232,7 @@ func (b *Bubblewrap) Confine() error {
 	}
 
 	for _, path := range b.devPaths {
-		if !lo.Contains(paths, path) {
+		if !seq.Contains(paths, path) {
 			args = append(args, "--dev-bind", path, path)
 			log.Debugf("bubblewrap: dev: %s", path)
 			paths = append(paths, path)

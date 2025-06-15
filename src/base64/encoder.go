@@ -5,9 +5,9 @@ import (
 	"io"
 
 	"github.com/illikainen/go-utils/src/buffer"
+	"github.com/illikainen/go-utils/src/seq"
 
 	"github.com/pkg/errors"
-	"github.com/samber/lo"
 )
 
 type Encoder struct {
@@ -37,7 +37,7 @@ func (e *Encoder) Seek(offset int64, whence int) (int64, error) {
 }
 
 func (e *Encoder) Close() error {
-	for _, chunk := range lo.Chunk(e.buffer.Bytes(), e.encoder.DecodedLen(e.width)) {
+	for _, chunk := range seq.Chunk(e.buffer.Bytes(), e.encoder.DecodedLen(e.width)) {
 		data := []byte(e.encoder.EncodeToString(chunk) + "\n")
 		n, err := e.writer.Write(data)
 		if err != nil {

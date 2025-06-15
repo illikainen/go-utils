@@ -3,10 +3,10 @@ package logging
 import (
 	"fmt"
 
+	"github.com/illikainen/go-utils/src/seq"
 	"github.com/illikainen/go-utils/src/stringx"
 
 	"github.com/fatih/color"
-	"github.com/samber/lo"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -54,7 +54,7 @@ func (f *SanitizedTextFormatter) Format(entry *log.Entry) ([]byte, error) {
 		level = color.RedString(entry.Level.String())
 	}
 
-	return lo.FlatMap(stringx.SplitLines(entry.Message), func(line string, _ int) []byte {
+	return seq.ExpandBy(stringx.SplitLines(entry.Message), func(line string, _ int) []byte {
 		return []byte(fmt.Sprintf("%-14s | %s\n", level, stringx.Sanitize(line)))
 	}), nil
 }
