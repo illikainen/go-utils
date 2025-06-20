@@ -50,6 +50,10 @@ func (e *MultiError) Error() string {
 	return strings.Join(strs, "\n")
 }
 
+func (e *MultiError) Errors() []error {
+	return e.errs
+}
+
 func (e *MultiError) Unwrap() error {
 	if len(e.errs) > 0 {
 		return &MultiError{errs: e.errs[1:]}
