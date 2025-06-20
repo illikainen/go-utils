@@ -27,7 +27,7 @@ func Join(errs ...error) error {
 	if n == 0 {
 		return nil
 	}
-	e := &joinError{
+	e := &MultiError{
 		errs: make([]error, 0, n),
 	}
 	for _, err := range errs {
@@ -38,11 +38,11 @@ func Join(errs ...error) error {
 	return e
 }
 
-type joinError struct {
+type MultiError struct {
 	errs []error
 }
 
-func (e *joinError) Error() string {
+func (e *MultiError) Error() string {
 	strs := []string{}
 	for _, err := range e.errs {
 		strs = append(strs, err.Error())
@@ -50,14 +50,14 @@ func (e *joinError) Error() string {
 	return strings.Join(strs, "\n")
 }
 
-func (e *joinError) Unwrap() error {
+func (e *MultiError) Unwrap() error {
 	if len(e.errs) > 0 {
-		return &joinError{errs: e.errs[1:]}
+		return &MultiError{errs: e.errs[1:]}
 	}
 	return nil
 }
 
-func (e *joinError) Is(target error) bool {
+func (e *MultiError) Is(target error) bool {
 	for _, err := range e.errs {
 		if errors.Is(err, target) {
 			return true
