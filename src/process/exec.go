@@ -35,18 +35,17 @@ type ExecOutput struct {
 }
 
 func Exec(opts *ExecOptions) (*ExecOutput, error) {
-	var cmd *exec.Cmd
+	args := opts.Command
 	if opts.Become != "" {
-		esc, err := become(opts.Become)
+		esc, err := Become(opts.Become)
 		if err != nil {
 			return nil, err
 		}
 
-		cmd = exec.Command(esc[0], append(esc[1:], opts.Command...)...) // #nosec G204
-	} else {
-		cmd = exec.Command(opts.Command[0], opts.Command[1:]...) // #nosec G204
+		args = append(esc, args...)
 	}
 
+	cmd := exec.Command(args[0], args[1:]...) // #nosec G204
 	cmd.Env = opts.Env
 	cmd.Dir = opts.Dir
 	cmd.Stdin = opts.Stdin
@@ -107,7 +106,7 @@ func Exec(opts *ExecOptions) (*ExecOutput, error) {
 	return out, nil
 }
 
-func become(username string) ([]string, error) {
+func Become(username string) ([]string, error) {
 	cur, err := user.Current()
 	if err != nil {
 		return nil, err
