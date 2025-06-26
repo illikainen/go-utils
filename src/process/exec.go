@@ -14,14 +14,15 @@ import (
 )
 
 type ExecOptions struct {
-	Command []string
-	Env     []string
-	Dir     string
-	Become  string
-	Stdin   io.Reader
-	Stdout  OutputFunc
-	Stderr  OutputFunc
-	Trusted bool
+	Command         []string
+	Env             []string
+	Dir             string
+	Become          string
+	Stdin           io.Reader
+	Stdout          OutputFunc
+	Stderr          OutputFunc
+	IgnoreExitError bool
+	Trusted         bool
 }
 
 const (
@@ -30,8 +31,9 @@ const (
 )
 
 type ExecOutput struct {
-	Stdout []byte
-	Stderr []byte
+	Stdout   []byte
+	Stderr   []byte
+	ExitCode int
 }
 
 func Exec(opts *ExecOptions) (*ExecOutput, error) {
@@ -50,7 +52,7 @@ func Exec(opts *ExecOptions) (*ExecOutput, error) {
 	cmd.Dir = opts.Dir
 	cmd.Stdin = opts.Stdin
 
-	out := &ExecOutput{}
+	out := &ExecOutput{ExitCode: 1}
 	group := errgroup.Group{}
 
 	stdoutPipe, err := cmd.StdoutPipe()
@@ -97,12 +99,22 @@ func Exec(opts *ExecOptions) (*ExecOutput, error) {
 
 	err = cmd.Wait()
 	if err != nil {
-		if len(out.Stderr) > 0 {
-			return nil, errors.Errorf("%s", out.Stderr)
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) {
+			out.ExitCode = exitErr.ExitCode()
+
+			if opts.IgnoreExitError {
+				return out, nil
+			}
+
+			if len(out.Stderr) > 0 {
+				return nil, errors.Errorf("%s", out.Stderr)
+			}
 		}
 		return nil, err
 	}
 
+	out.ExitCode = 0
 	return out, nil
 }
 
