@@ -57,7 +57,7 @@ func Exec(opts *ExecOptions) (*ExecOutput, error) {
 
 	stdoutPipe, err := cmd.StdoutPipe()
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	stdoutFunc := opts.Stdout
@@ -72,7 +72,7 @@ func Exec(opts *ExecOptions) (*ExecOutput, error) {
 
 	stderrPipe, err := cmd.StderrPipe()
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	stderrFunc := opts.Stderr
@@ -89,12 +89,12 @@ func Exec(opts *ExecOptions) (*ExecOutput, error) {
 	err = cmd.Start()
 	if err != nil {
 		// XXX: what to do with the goroutine errgroup here?
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	err = group.Wait()
 	if err != nil {
-		return nil, errorx.Join(err, cmd.Wait())
+		return nil, errorx.Join(errors.WithStack(err), cmd.Wait())
 	}
 
 	err = cmd.Wait()
@@ -111,7 +111,7 @@ func Exec(opts *ExecOptions) (*ExecOutput, error) {
 				return nil, errors.Errorf("%s", out.Stderr)
 			}
 		}
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	out.ExitCode = 0
@@ -121,7 +121,7 @@ func Exec(opts *ExecOptions) (*ExecOutput, error) {
 func Become(username string) ([]string, error) {
 	cur, err := user.Current()
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	if cur.Username == username {
