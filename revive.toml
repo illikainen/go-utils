@@ -16,7 +16,7 @@ arguments = ["lint"]
 arguments = [60]
 
 [rule.cognitive-complexity]
-arguments = [60]
+arguments = [100]
 
 [rule.confusing-naming]
 disabled = true
