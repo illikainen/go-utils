@@ -21,6 +21,9 @@ arguments = [100]
 [rule.confusing-naming]
 disabled = true
 
+[rule.confusing-results]
+disabled = true
+
 [rule.deep-exit]
 disabled = true
 
