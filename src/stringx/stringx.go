@@ -44,6 +44,23 @@ func Sanitize[T []byte | string](s T) T {
 	return T(input)
 }
 
+func IsPrintable[T []byte | string](v T) bool {
+	var input []byte
+	if value, ok := any(v).([]byte); ok {
+		input = value
+	} else {
+		input = []byte(v)
+	}
+
+	for _, b := range input {
+		if b != 0xa && (b < 0x20 || b > 0x7e) {
+			return false
+		}
+	}
+
+	return true
+}
+
 func SplitLines(s string) []string {
 	s = strings.ReplaceAll(s, "\r\n", "\n")
 	s = strings.TrimRight(s, "\n")
