@@ -2,6 +2,8 @@ package logging
 
 import (
 	"fmt"
+	"path/filepath"
+	"strings"
 
 	"github.com/illikainen/go-utils/src/seq"
 	"github.com/illikainen/go-utils/src/stringx"
@@ -40,7 +42,6 @@ func (f *SanitizedTextFormatter) Format(entry *log.Entry) ([]byte, error) {
 	}
 
 	level := ""
-
 	switch entry.Level {
 	case log.TraceLevel:
 		level = color.CyanString(entry.Level.String())
@@ -54,8 +55,21 @@ func (f *SanitizedTextFormatter) Format(entry *log.Entry) ([]byte, error) {
 		level = color.RedString(entry.Level.String())
 	}
 
+	meta := ""
+	if entry.Logger.GetLevel() >= log.DebugLevel {
+		if file := GetField(entry.Data, "file", ""); file != "" {
+			elts := strings.Split(GetField(entry.Data, "func", "UNKNOWN"), ".")
+			fn := elts[len(elts)-1]
+			meta = fmt.Sprintf("%s: %s(): ", filepath.Base(file), fn)
+		} else if entry.HasCaller() {
+			elts := strings.Split(entry.Caller.Function, ".")
+			fn := elts[len(elts)-1]
+			meta = fmt.Sprintf("%s:%d: %s(): ", filepath.Base(entry.Caller.File), entry.Caller.Line, fn)
+		}
+	}
+
 	return seq.ExpandBy(stringx.SplitLines(entry.Message), func(line string, _ int) []byte {
-		return []byte(fmt.Sprintf("%-14s | %s\n", level, stringx.Sanitize(line)))
+		return []byte(fmt.Sprintf("%-14s | %s%s\n", level, stringx.Sanitize(meta), stringx.Sanitize(line)))
 	}), nil
 }
 
