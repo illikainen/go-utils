@@ -11,3 +11,8 @@ func Merge[K comparable, V any](maps ...map[K]V) map[K]V {
 
 	return result
 }
+
+func HasKey[K comparable, V any](m map[K]V, key K) bool {
+	_, ok := m[key]
+	return ok
+}
