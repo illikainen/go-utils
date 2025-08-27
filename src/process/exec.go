@@ -18,6 +18,7 @@ type ExecOptions struct {
 	Env             []string
 	Dir             string
 	Become          string
+	TrustedEnv      bool
 	Stdin           io.Reader
 	Stdout          OutputFunc
 	Stderr          OutputFunc
@@ -42,6 +43,12 @@ func Exec(opts *ExecOptions) (*ExecOutput, error) {
 		esc, err := Become(opts.Become)
 		if err != nil {
 			return nil, err
+		}
+
+		esc = append(esc, "--")
+		if opts.TrustedEnv && len(opts.Env) > 0 {
+			esc = append(esc, "env")
+			esc = append(esc, opts.Env...)
 		}
 
 		args = append(esc, args...)
